@@ -1,0 +1,102 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "africa-pulse-adf"
+		},
+		"ls_africapulse_adls_servicePrincipalCredential": {
+			"type": "secureString",
+			"metadata": "Secure string for 'servicePrincipalCredential' of 'ls_africapulse_adls'"
+		},
+		"ls_africapulse_adls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://africapulse.dfs.core.windows.net/"
+		},
+		"ls_africapulse_adls_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"ls_africapulse_adls_properties_typeProperties_servicePrincipalId": {
+			"type": "string",
+			"defaultValue": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"ls_worldbank_http_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.worldbank.org/v2/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_worldbank_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_worldbank_http",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"indicator": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "country/all/indicator/@{dataset().indicator}?format=json&per_page=1000&mrv=20",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_worldbank_http')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_africapulse_adls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_africapulse_adls_properties_typeProperties_url')]",
+					"tenant": "[parameters('ls_africapulse_adls_properties_typeProperties_tenant')]",
+					"servicePrincipalId": "[parameters('ls_africapulse_adls_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalCredential": {
+						"type": "SecureString",
+						"value": "[parameters('ls_africapulse_adls_servicePrincipalCredential')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_worldbank_http')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('ls_worldbank_http_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

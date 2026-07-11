@@ -1,0 +1,77 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "africa-pulse-adf"
+		},
+		"ls_africapulse_adls_servicePrincipalCredential": {
+			"type": "secureString",
+			"metadata": "Secure string for 'servicePrincipalCredential' of 'ls_africapulse_adls'"
+		},
+		"ls_africapulse_adls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://africapulse.dfs.core.windows.net/"
+		},
+		"ls_africapulse_adls_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"ls_africapulse_adls_properties_typeProperties_servicePrincipalId": {
+			"type": "string",
+			"defaultValue": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"ls_worldbank_http_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.worldbank.org/v2/"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "africa-pulse-adf_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"ls_africapulse_adls_servicePrincipalCredential": {
+						"value": "[parameters('ls_africapulse_adls_servicePrincipalCredential')]"
+					},
+					"ls_africapulse_adls_properties_typeProperties_url": {
+						"value": "[parameters('ls_africapulse_adls_properties_typeProperties_url')]"
+					},
+					"ls_africapulse_adls_properties_typeProperties_tenant": {
+						"value": "[parameters('ls_africapulse_adls_properties_typeProperties_tenant')]"
+					},
+					"ls_africapulse_adls_properties_typeProperties_servicePrincipalId": {
+						"value": "[parameters('ls_africapulse_adls_properties_typeProperties_servicePrincipalId')]"
+					},
+					"ls_worldbank_http_properties_typeProperties_url": {
+						"value": "[parameters('ls_worldbank_http_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "africa-pulse-adf"
+		},
+		"ls_africapulse_adls_servicePrincipalCredential": {
+			"value": ""
+		},
+		"ls_africapulse_adls_properties_typeProperties_url": {
+			"value": "https://africapulse.dfs.core.windows.net/"
+		},
+		"ls_africapulse_adls_properties_typeProperties_tenant": {
+			"value": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"ls_africapulse_adls_properties_typeProperties_servicePrincipalId": {
+			"value": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"ls_worldbank_http_properties_typeProperties_url": {
+			"value": "https://api.worldbank.org/v2/"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
