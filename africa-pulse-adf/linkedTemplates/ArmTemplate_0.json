@@ -68,6 +68,48 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_bronze_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_africapulse_adls",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"indicator": {
+						"type": "string"
+					},
+					"load_date": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "raw_@{dataset().indicator}_@{dataset().load_date}.json",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "bronze/world_bank/@{dataset().indicator}/@{dataset().load_date}",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "africa-economic-pulse",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_africapulse_adls')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_worldbank_json')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -96,6 +138,106 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_worldbank_http')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_ingest_worldbank_bronze')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "data_ingestion",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"logSettings": {
+								"enableCopyActivityLog": true,
+								"copyActivityLogSettings": {
+									"logLevel": "Warning",
+									"enableReliableLogging": false
+								},
+								"logLocationSettings": {
+									"linkedServiceName": {
+										"referenceName": "ls_africapulse_adls",
+										"type": "LinkedServiceReference"
+									}
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_worldbank_json",
+								"type": "DatasetReference",
+								"parameters": {
+									"indicator": {
+										"value": "@pipeline().parameters.indicator",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_bronze_json",
+								"type": "DatasetReference",
+								"parameters": {
+									"indicator": "@pipeline().parameters.indicator",
+									"load_date": {
+										"value": "@pipeline().parameters.load_date",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"indicator": {
+						"type": "string"
+					},
+					"load_date": {
+						"type": "string",
+						"defaultValue": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_worldbank_json')]",
+				"[concat(variables('factoryId'), '/datasets/ds_bronze_json')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_africapulse_adls')]"
 			]
 		}
 	]
