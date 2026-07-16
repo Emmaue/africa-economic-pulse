@@ -1,0 +1,26 @@
+{
+	"name": "ds_worldbank_json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_worldbank_http",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"indicator": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "country/all/indicator/@{dataset().indicator}?format=json&per_page=1000&mrv=20",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {}
+	}
+}

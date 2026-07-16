@@ -1,0 +1,73 @@
+{
+	"name": "pl_master_ingest_bronze",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set variable1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('indicators')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "pl_ingest_worldbank_bronze",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_ingest_worldbank_bronze",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"indicator": "@item()",
+									"load_date": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "indicators",
+					"value": [
+						"NY.GDP.MKTP.CD",
+						"FP.CPI.TOTL.ZG",
+						"SL.UEM.TOTL.ZS"
+					]
+				}
+			}
+		],
+		"variables": {
+			"indicators": {
+				"type": "Array"
+			}
+		},
+		"annotations": []
+	}
+}

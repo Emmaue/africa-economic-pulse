@@ -1,0 +1,17 @@
+{
+	"name": "views",
+	"properties": {
+		"content": {
+			"query": "CREATE VIEW review AS\nSELECT City, SUM(CAST(Sales AS float)) AS revenue\nFROM SuperstoreSales\nGROUP BY City;\n\nSELECT *\nFROM review;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "Sales",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

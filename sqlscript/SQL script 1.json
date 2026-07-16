@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 1",
+	"properties": {
+		"content": {
+			"query": "CREATE MASTER KEY ENCRYPTION BY PASSWORD = '<set locally, not stored in repo>';\nGO\n\nCREATE DATABASE SCOPED CREDENTIAL justicecreds\nWITH IDENTITY = 'Managed Identity';\nGO\n\n-----------CREATE EXT DATA SOURCE-----------\nCREATE EXTERNAL DATA SOURCE raw_ext_source\nWITH(\n    LOCATION = 'https://justicelearning.dfs.core.windows.net/demo',\n    CREDENTIAL = justicecreds\n)\n\nCREATE EXTERNAL FILE FORMAT csv_format\nWITH\n(\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR = ''\n    )\n)\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "Sales",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

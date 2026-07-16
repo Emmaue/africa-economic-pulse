@@ -1,0 +1,17 @@
+{
+	"name": "demo script for learning distributed tble",
+	"properties": {
+		"content": {
+			"query": "CREATE SCHEMA gold;\nGO\n\nCREATE TABLE gold.fct_table(\n    ID INT,\n    Name varchar(20)\n)\nWITH(\n    DISTRIBUTION = HASH(ID)\n);",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "justicededicatedool",
+				"poolName": "justicededicatedool"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

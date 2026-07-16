@@ -1,0 +1,15 @@
+{
+	"name": "ls_africapulse_adls",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://africapulse.dfs.core.windows.net/",
+			"tenant": "0985c912-df08-4035-8371-ffd388b05cd1",
+			"servicePrincipalId": "147d87b6-f030-4d1c-80c5-489d560fb4b2",
+			"servicePrincipalCredentialType": "ServicePrincipalKey",
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDZCNjZEMzVELThGOTMtNEZCQy05MzM3LThEMDk4NjdCRDkwMl80ZDQzZTNjMy02NGUwLTQ4MjItYTVhYS05NjZmYWFmOTQzM2QiDQp9"
+		}
+	}
+}

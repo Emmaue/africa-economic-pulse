@@ -1,0 +1,15 @@
+{
+	"name": "africa-pulse-adf",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "southafricanorth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "5c117578-3de0-4bab-8200-79d6c98c671b",
+		"tenantId": "0985c912-df08-4035-8371-ffd388b05cd1"
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "tr_daily_worldbank",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_master_ingest_bronze",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2026-07-12T00:00:00",
+				"timeZone": "W. Central Africa Standard Time"
+			}
+		}
+	}
+}

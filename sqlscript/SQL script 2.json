@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 2",
+	"properties": {
+		"content": {
+			"query": "CREATE EXTERNAL FILE FORMAT parquet_format\nWITH (\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n);\n\nCREATE EXTERNAL TABLE SalesGold\nWITH (\n    LOCATION = '/gold/region_category_summary/',\n    DATA_SOURCE = raw_ext_source,\n    FILE_FORMAT = parquet_format\n)\nAS\nSELECT\n    Region,\n    Category,\n    Sub_Category,\n    COUNT(*) AS Total_Orders,\n    SUM(CAST(Sales AS FLOAT)) AS Total_Sales,\n    SUM(Profit) AS Total_Profit\nFROM SuperstoreSales\nGROUP BY Region, Category, Sub_Category;\n\n\nDROP EXTERNAL TABLE SuperstoreSales;\n\nCREATE EXTERNAL TABLE SuperstoreSales\n(\n    Row_ID          INT,\n    Order_ID        VARCHAR(50),\n    Order_Date      VARCHAR(50),\n    Ship_Date       VARCHAR(50),\n    Ship_Mode       VARCHAR(50),\n    Customer_ID     VARCHAR(50),\n    Customer_Name   VARCHAR(100),\n    Segment         VARCHAR(50),\n    Country         VARCHAR(50),\n    City            VARCHAR(50),\n    State           VARCHAR(50),\n    Postal_Code     VARCHAR(20),\n    Region          VARCHAR(20),\n    Product_ID      VARCHAR(50),\n    Category        VARCHAR(50),\n    Sub_Category    VARCHAR(100),\n    Product_Name    VARCHAR(255),\n    Sales           VARCHAR(50),\n    Quantity        VARCHAR(20),\n    Discount        VARCHAR(20),\n    Profit          FLOAT\n)\nWITH\n(\n    LOCATION = '/demo_data/Superstore.csv',\n    DATA_SOURCE = raw_ext_source,\n    FILE_FORMAT = csv_format\n);\n\n\nDROP EXTERNAL TABLE dbo.SalesGold;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "Sales",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
