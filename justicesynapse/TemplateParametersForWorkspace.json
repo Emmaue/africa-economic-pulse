@@ -1,0 +1,45 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "justicesynapse"
+		},
+		"africanpulse_servicePrincipalCredential": {
+			"value": ""
+		},
+		"justicesynapse-WorkspaceDefaultSqlServer_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:justicesynapse.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ls_africapulse_adls_servicePrincipalCredential": {
+			"value": ""
+		},
+		"africanpulse_properties_typeProperties_url": {
+			"value": "https://africapulse.dfs.core.windows.net/"
+		},
+		"africanpulse_properties_typeProperties_tenant": {
+			"value": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"africanpulse_properties_typeProperties_servicePrincipalId": {
+			"value": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"externaldatasource_properties_typeProperties_url": {
+			"value": "https://justicelearning.dfs.core.windows.net/"
+		},
+		"justicesynapse-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://justicesynapse.dfs.core.windows.net"
+		},
+		"ls_africapulse_adls_properties_typeProperties_url": {
+			"value": "https://africapulse.dfs.core.windows.net/"
+		},
+		"ls_africapulse_adls_properties_typeProperties_tenant": {
+			"value": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"ls_africapulse_adls_properties_typeProperties_servicePrincipalId": {
+			"value": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"ls_worldbank_http_properties_typeProperties_url": {
+			"value": "https://api.worldbank.org/v2/"
+		}
+	}
+}

@@ -1,0 +1,619 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "justicesynapse"
+		},
+		"africanpulse_servicePrincipalCredential": {
+			"type": "secureString",
+			"metadata": "Secure string for 'servicePrincipalCredential' of 'africanpulse'"
+		},
+		"justicesynapse-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'justicesynapse-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:justicesynapse.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ls_africapulse_adls_servicePrincipalCredential": {
+			"type": "secureString",
+			"metadata": "Secure string for 'servicePrincipalCredential' of 'ls_africapulse_adls'"
+		},
+		"africanpulse_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://africapulse.dfs.core.windows.net/"
+		},
+		"africanpulse_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"africanpulse_properties_typeProperties_servicePrincipalId": {
+			"type": "string",
+			"defaultValue": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"externaldatasource_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://justicelearning.dfs.core.windows.net/"
+		},
+		"justicesynapse-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://justicesynapse.dfs.core.windows.net"
+		},
+		"ls_africapulse_adls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://africapulse.dfs.core.windows.net/"
+		},
+		"ls_africapulse_adls_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "0985c912-df08-4035-8371-ffd388b05cd1"
+		},
+		"ls_africapulse_adls_properties_typeProperties_servicePrincipalId": {
+			"type": "string",
+			"defaultValue": "147d87b6-f030-4d1c-80c5-489d560fb4b2"
+		},
+		"ls_worldbank_http_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.worldbank.org/v2/"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/pl_ingest_worldbank_bronze')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "data_ingestion",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"logSettings": {
+								"enableCopyActivityLog": true,
+								"copyActivityLogSettings": {
+									"logLevel": "Warning",
+									"enableReliableLogging": false
+								},
+								"logLocationSettings": {
+									"linkedServiceName": {
+										"referenceName": "ls_africapulse_adls",
+										"type": "LinkedServiceReference"
+									}
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_worldbank_json",
+								"type": "DatasetReference",
+								"parameters": {
+									"indicator": {
+										"value": "@pipeline().parameters.indicator",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_bronze_json",
+								"type": "DatasetReference",
+								"parameters": {
+									"indicator": "@pipeline().parameters.indicator",
+									"load_date": {
+										"value": "@pipeline().parameters.load_date",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"indicator": {
+						"type": "string"
+					},
+					"load_date": {
+						"type": "string",
+						"defaultValue": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ds_worldbank_json')]",
+				"[concat(variables('workspaceId'), '/datasets/ds_bronze_json')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ls_africapulse_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/pl_master_ingest_bronze')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Set variable1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('indicators')",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "pl_ingest_worldbank_bronze",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_ingest_worldbank_bronze",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"indicator": {
+												"value": "@item()",
+												"type": "Expression"
+											},
+											"load_date": {
+												"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Set variable1",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "indicators",
+							"value": [
+								"NY.GDP.MKTP.CD",
+								"FP.CPI.TOTL.ZG",
+								"SL.UEM.TOTL.ZS"
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"indicators": {
+						"type": "Array"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/pl_ingest_worldbank_bronze')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_bronze_json')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_africapulse_adls",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"indicator": {
+						"type": "string"
+					},
+					"load_date": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "raw_@{dataset().indicator}_@{dataset().load_date}.json",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "bronze/world_bank/@{dataset().indicator}/@{dataset().load_date}",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "africa-economic-pulse",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_africapulse_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_worldbank_json')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_worldbank_http",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"indicator": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "country/all/indicator/@{dataset().indicator}?format=json&per_page=1000&mrv=20",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_worldbank_http')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/africanpulse')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('africanpulse_properties_typeProperties_url')]",
+					"tenant": "[parameters('africanpulse_properties_typeProperties_tenant')]",
+					"servicePrincipalId": "[parameters('africanpulse_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalCredential": {
+						"type": "SecureString",
+						"value": "[parameters('africanpulse_servicePrincipalCredential')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/externaldatasource')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('externaldatasource_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/justicesynapse-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('justicesynapse-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/justicesynapse-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('justicesynapse-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ls_africapulse_adls')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_africapulse_adls_properties_typeProperties_url')]",
+					"tenant": "[parameters('ls_africapulse_adls_properties_typeProperties_tenant')]",
+					"servicePrincipalId": "[parameters('ls_africapulse_adls_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalCredential": {
+						"type": "SecureString",
+						"value": "[parameters('ls_africapulse_adls_servicePrincipalCredential')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ls_worldbank_http')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('ls_worldbank_http_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/tr_daily_worldbank')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_master_ingest_bronze",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2026-07-12T00:00:00",
+						"timeZone": "W. Central Africa Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/pl_master_ingest_bronze')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE MASTER KEY ENCRYPTION BY PASSWORD = '<set locally, not stored in repo>';\nGO\n\nCREATE DATABASE SCOPED CREDENTIAL justicecreds\nWITH IDENTITY = 'Managed Identity';\nGO\n\n-----------CREATE EXT DATA SOURCE-----------\nCREATE EXTERNAL DATA SOURCE raw_ext_source\nWITH(\n    LOCATION = 'https://justicelearning.dfs.core.windows.net/demo',\n    CREDENTIAL = justicecreds\n)\n\nCREATE EXTERNAL FILE FORMAT csv_format\nWITH\n(\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR = ''\n    )\n)\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "Sales",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 2')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE EXTERNAL FILE FORMAT parquet_format\nWITH (\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n);\n\nCREATE EXTERNAL TABLE SalesGold\nWITH (\n    LOCATION = '/gold/region_category_summary/',\n    DATA_SOURCE = raw_ext_source,\n    FILE_FORMAT = parquet_format\n)\nAS\nSELECT\n    Region,\n    Category,\n    Sub_Category,\n    COUNT(*) AS Total_Orders,\n    SUM(CAST(Sales AS FLOAT)) AS Total_Sales,\n    SUM(Profit) AS Total_Profit\nFROM SuperstoreSales\nGROUP BY Region, Category, Sub_Category;\n\n\nDROP EXTERNAL TABLE SuperstoreSales;\n\nCREATE EXTERNAL TABLE SuperstoreSales\n(\n    Row_ID          INT,\n    Order_ID        VARCHAR(50),\n    Order_Date      VARCHAR(50),\n    Ship_Date       VARCHAR(50),\n    Ship_Mode       VARCHAR(50),\n    Customer_ID     VARCHAR(50),\n    Customer_Name   VARCHAR(100),\n    Segment         VARCHAR(50),\n    Country         VARCHAR(50),\n    City            VARCHAR(50),\n    State           VARCHAR(50),\n    Postal_Code     VARCHAR(20),\n    Region          VARCHAR(20),\n    Product_ID      VARCHAR(50),\n    Category        VARCHAR(50),\n    Sub_Category    VARCHAR(100),\n    Product_Name    VARCHAR(255),\n    Sales           VARCHAR(50),\n    Quantity        VARCHAR(20),\n    Discount        VARCHAR(20),\n    Profit          FLOAT\n)\nWITH\n(\n    LOCATION = '/demo_data/Superstore.csv',\n    DATA_SOURCE = raw_ext_source,\n    FILE_FORMAT = csv_format\n);\n\n\nDROP EXTERNAL TABLE dbo.SalesGold;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "Sales",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/africa_setup')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- Create master key to encrypt credentials\nCREATE MASTER KEY ENCRYPTION BY PASSWORD = '<set locally, not stored in repo>';\n\n\n\n-- Allow Synapse to access africapulse storage\nCREATE DATABASE SCOPED CREDENTIAL [africapulse_credential]\nWITH IDENTITY = 'Managed Identity';\n\nCREATE EXTERNAL DATA SOURCE africapulse_gold\nWITH (\n    LOCATION = 'https://africapulse.dfs.core.windows.net/africa-economic-pulse',\n    CREDENTIAL = [africapulse_credential]\n);\n\n\nCREATE EXTERNAL FILE FORMAT parquet_format\nWITH (\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n);\n\n\n\nCREATE EXTERNAL TABLE dbo.economic_summary\n(\n    country_iso3        VARCHAR(10),\n    country_name        VARCHAR(100),\n    year                INT,\n    gdp_usd             FLOAT,\n    inflation_pct       FLOAT,\n    unemployment_pct    FLOAT,\n    gdp_billions        FLOAT,\n    data_quality_flag   VARCHAR(50),\n    ingestion_date      DATE,\n    pipeline_name       VARCHAR(100),\n    source_system       VARCHAR(100)\n)\nWITH (\n    LOCATION = '/gold/economic_summary/**',\n    DATA_SOURCE = africapulse_gold,\n    FILE_FORMAT = parquet_format\n);\n\nSELECT TOP 5 * FROM dbo.economic_summary ORDER BY year DESC;\n\n\n\n\n\nCREATE EXTERNAL TABLE dbo.nigeria_spotlight\n(\n    country_iso3        VARCHAR(10),\n    country_name        VARCHAR(100),\n    year                INT,\n    gdp_usd             FLOAT,\n    inflation_pct       FLOAT,\n    unemployment_pct    FLOAT,\n    gdp_billions        FLOAT,\n    data_quality_flag   VARCHAR(50),\n    gdp_prev_year       FLOAT,\n    gdp_growth_pct      FLOAT,\n    ingestion_date      DATE,\n    pipeline_name       VARCHAR(100),\n    source_system       VARCHAR(100)\n)\nWITH (\n    LOCATION = '/gold/nigeria_spotlight/**',\n    DATA_SOURCE = africapulse_gold,\n    FILE_FORMAT = parquet_format\n);\n\nSELECT TOP 5 * FROM dbo.nigeria_spotlight ORDER BY year DESC;\n\nCREATE EXTERNAL TABLE dbo.country_comparisons\n(\n    country_iso3            VARCHAR(10),\n    country_name            VARCHAR(100),\n    avg_gdp_billions        FLOAT,\n    avg_inflation_pct       FLOAT,\n    avg_unemployment_pct    FLOAT,\n    ingestion_date          DATE,\n    pipeline_name           VARCHAR(100),\n    source_system           VARCHAR(100)\n)\nWITH (\n    LOCATION = '/gold/country_comparisons/**',\n    DATA_SOURCE = africapulse_gold,\n    FILE_FORMAT = parquet_format\n);\n\nSELECT TOP 10 * FROM dbo.country_comparisons ORDER BY avg_gdp_billions DESC;\n\n\n\n\n-- View 1: Top 10 African economies by average GDP\nCREATE VIEW dbo.vw_top10_economies AS\nSELECT TOP 10\n    country_name,\n    country_iso3,\n    avg_gdp_billions,\n    avg_inflation_pct,\n    avg_unemployment_pct\nFROM dbo.country_comparisons\nORDER BY avg_gdp_billions DESC;\n\n-- View 2: Nigeria economic trend over time\nCREATE VIEW dbo.vw_nigeria_trend AS\nSELECT\n    year,\n    gdp_billions,\n    gdp_growth_pct,\n    inflation_pct,\n    unemployment_pct\nFROM dbo.nigeria_spotlight\nWHERE year >= 2010;\n\n-- View 3: Latest year snapshot for all countries\nCREATE VIEW dbo.vw_latest_snapshot AS\nSELECT\n    country_name,\n    country_iso3,\n    year,\n    gdp_billions,\n    inflation_pct,\n    unemployment_pct,\n    data_quality_flag\nFROM dbo.economic_summary\nWHERE year = (SELECT MAX(year) FROM dbo.economic_summary)\nAND data_quality_flag = 'complete';\n\n-- View 4: Full economic summary for trend analysis\nCREATE VIEW dbo.vw_economic_trends AS\nSELECT\n    country_name,\n    country_iso3,\n    year,\n    gdp_billions,\n    inflation_pct,\n    unemployment_pct,\n    data_quality_flag\nFROM dbo.economic_summary\nWHERE data_quality_flag = 'complete'\nAND year >= 2000;\n\nSELECT TOP 5 * FROM dbo.vw_top10_economies;\nSELECT TOP 5 * FROM dbo.vw_nigeria_trend;\nSELECT * FROM dbo.vw_latest_snapshot;\nSELECT * FROM dbo.vw_economic_trends;\n\n\n\n\n-- Drop and recreate vw_economic_trends without the complete filter\nDROP VIEW dbo.vw_economic_trends;\n\nCREATE VIEW dbo.vw_economic_trends AS\nSELECT\n    country_name,\n    country_iso3,\n    year,\n    gdp_billions,\n    inflation_pct,\n    unemployment_pct,\n    data_quality_flag\nFROM dbo.economic_summary\nWHERE year >= 2000\nAND gdp_billions IS NOT NULL;\n\n\n\n\nDROP VIEW dbo.vw_latest_snapshot;\n\nCREATE VIEW dbo.vw_latest_snapshot AS\nSELECT\n    country_name,\n    country_iso3,\n    year,\n    gdp_billions,\n    inflation_pct,\n    unemployment_pct,\n    data_quality_flag\nFROM dbo.economic_summary\nWHERE year = (SELECT MAX(year) FROM dbo.economic_summary)\nAND gdp_billions IS NOT NULL;\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "AfricaPulse",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/demo script for learning distributed tble')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE SCHEMA gold;\nGO\n\nCREATE TABLE gold.fct_table(\n    ID INT,\n    Name varchar(20)\n)\nWITH(\n    DISTRIBUTION = HASH(ID)\n);",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "justicededicatedool",
+						"poolName": "justicededicatedool"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/views')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE VIEW review AS\nSELECT City, SUM(CAST(Sales AS float)) AS revenue\nFROM SuperstoreSales\nGROUP BY City;\n\nSELECT *\nFROM review;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "Sales",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/justicededicatedool')]",
+			"type": "Microsoft.Synapse/workspaces/sqlPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"collation": "SQL_Latin1_General_CP1_CI_AS",
+				"maxSizeBytes": 263882790666240,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "southafricanorth"
+		}
+	]
+}
