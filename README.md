@@ -183,6 +183,7 @@ Two Spark options were essential:
 **Data quality + lineage metadata:** nulls dropped, year cast to int, country names trimmed, plus `ingestion_date`, `pipeline_name`, and `source_system` columns added for traceability.
 
 **Writing Silver as Delta Lake:**
+See spark-notebooks/02_silver_world_bank_transformation.ipynb for full code
 
 <img src="docs/images/databricks/silver-transformation-delta-write.png"
      alt="Silver Transformation Delta Write"
@@ -197,6 +198,7 @@ Delta was chosen over plain Parquet for ACID transactions, schema enforcement, t
      width="900">
 
 **Writing Gold aggregates:**
+See spark-notebooks/02_gold_world_bank_transformation.ipynb for full code
 
 <img src="docs/images/databricks/gold-tables-write-notebook.png"
      alt="Gold Tables Write Notebook"
@@ -266,7 +268,7 @@ A dedicated, least-privilege SQL login (`AfricaPulseUser`) was created for Power
 Map by GDP size, top-10 economies bar chart, inflation-vs-unemployment bubble chart, KPI cards, and a GDP-share treemap.
 
 ### Dashboard 2 — Nigeria Spotlight
-*How has Nigeria's economy evolved over 25 years?*
+*How has Nigeria's economy evolved over 15 years?*
 
 <img src="docs/images/powerbi/dashboard-2-nigeria-spotlight.jpg"
      alt="Power BI Dashboard Nigeria Spotlight"
@@ -377,7 +379,7 @@ Secrets retrieved this way never render in notebook output, execution logs, or G
 - **The RBAC pattern repeats everywhere:** *Service A needs Resource B → grant Service A's Managed Identity the minimum role on B via IAM.* This single pattern solved ADF→ADLS, Databricks→ADLS, Synapse→ADLS, and Purview→ADLS.
 - **Dependency chains must be respected:** external tables → data sources → credentials → master key; datasets → linked services. Always map dependencies before restructuring.
 - **Databricks cluster restarts clear memory** OAuth config, path variables, and DataFrames are all lost. Production fixes this with Secrets + Jobs; here, the auth and paths cells are simply re-run after any restart.
-- **Bronze immutability is non-negotiable** — it stores all 200+ countries even though only ~54 African countries are ultimately needed, because filtering is Silver's job, not Bronze's.
+- **Bronze immutability is non-negotiable** it stores all 200+ countries even though only ~54 African countries are ultimately needed, because filtering is Silver's job, not Bronze's.
 - **Every decision has three dimensions:** cost, complexity, and reliability. Weighing all three not just "does it work" is what separates senior engineering judgment from junior implementation.
 
 ---
@@ -432,4 +434,4 @@ africa-economic-pulse/
 
 ## About This Project
 
-Built as a portfolio project to demonstrate end-to-end Azure data engineering: ingestion, transformation, serving, visualization, governance, and observability — with every decision and mistake documented, not just the polished result.
+Built as a portfolio project to demonstrate end-to-end Azure data engineering: ingestion, transformation, serving, visualization, governance, and observability with every decision and mistake documented, not just the polished result.
